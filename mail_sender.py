@@ -105,4 +105,3 @@ if __name__ == "__main__":
     auto_mail = AutoMail(mail_host, mail_user, mail_pass, mail_sender, to_receivers, cc_receivers, content_type, file_path)
 
     auto_mail.run()
-    # send_mail(file_path, CONTENT_TYPE, mail_host, mail_user, mail_pass, sender, to_receivers, cc_receivers)

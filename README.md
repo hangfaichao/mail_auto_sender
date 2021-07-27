@@ -13,3 +13,7 @@ Installation: `pip3 install markdown`
 ## Configuration
 
 write your own 'property.conf'
+
+## Run
+
+`python3 mail_sender.py ${your_markdown_path}`

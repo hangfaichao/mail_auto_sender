@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
     
     config = ConfigParser()
-    config.read("property-qq.conf", encoding="utf-8")
+    config.read("property.conf", encoding="utf-8")
     mail_host = config["email"]["mail_host"]
     mail_user = config["email"]["mail_user"]
     mail_pass = config["email"]["mail_pass"]

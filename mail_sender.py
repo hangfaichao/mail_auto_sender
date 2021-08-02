@@ -4,6 +4,7 @@ import markdown
 import codecs
 from configparser import ConfigParser
 import sys
+import os
 
 class AutoMail:
 
@@ -91,9 +92,11 @@ if __name__ == "__main__":
 
     file_path = sys.argv[1]
 
+    dir_name = os.path.dirname(__file__)
+    conf_file_path = dir_name + "/property.conf"
     
     config = ConfigParser()
-    config.read("property.conf", encoding="utf-8")
+    config.read(conf_file_path, encoding="utf-8")
     mail_host = config["email"]["mail_host"]
     mail_user = config["email"]["mail_user"]
     mail_pass = config["email"]["mail_pass"]

@@ -5,54 +5,67 @@ import codecs
 from configparser import ConfigParser
 import sys
 import os
+from enum import Enum, unique
+
+@unique
+class TextType(Enum):
+    TXT = 0
+    MD = 1
+    HTML = 2
+
 
 class AutoMail:
 
-    def __init__(self, mail_host, mail_user, mail_pass, mail_sender, to_receivers, cc_receivers, content_type, file_path):
-        self.mail_host = mail_host
-        self.mail_user = mail_user
-        self.mail_pass = mail_pass
-        self.mail_sender = mail_sender
-        self.to_receivers = to_receivers
-        self.cc_receivers = cc_receivers
-        self.content_type = content_type
-        self.content = ""
-        self.file_path = file_path
-        self.subject = ""
+    def __init__(self, config_file_path, content_file_path):
+
+        self.load_config_info(config_file_path)
+        self.load_content_info(content_file_path)
+
+    def load_config_info(self, file_path):
+
+        config = ConfigParser()
+        config.read(file_path, encoding="utf-8")
+        self.mail_host = config["email"]["mail_host"]
+        self.mail_user = config["email"]["mail_user"]
+        self.mail_pass = config["email"]["mail_pass"]
+        self.mail_sender = config["email"]["sender"]
+        self.to_receivers \
+            = [receiver.strip() for receiver in config["email"]["to_receivers"].split(",")]
+        self.cc_receivers \
+            = [receiver.strip() for receiver in config["email"]["cc_receivers"].split(",")] \
+            if "cc_receivers" in config["email"] \
+            else []
+
+    def load_content_info(self, file_path):
+        
+        file_type = file_path.split(".")[-1].upper()
+        self.check_content_file_type(file_type)
+        file_name = file_path.split("/")[-1][:file_path.split("/")[-1].rindex(".")]
+        raw_text = self.load_text(file_path)
+
+        self.subject = file_name
+        self.content_type, self.content = self.content_transfer(file_type, raw_text)
+
+    def load_text(self, file_path):
+        input_file = codecs.open(file_path)
+        return input_file.read()
 
     def markdown2html(self, text):
         return markdown.markdown(text)
 
-    def is_markdown(self, file_path):
-        return file_path[-3:] == ".md"
+    def check_content_file_type(self, content_file_type):
+        if content_file_type not in TextType._member_names_:
+            raise Exception(print("Error: Content file type: '" + content_file_type + "' not support"))
 
-    def check_file_type(self, file_path):
-        if not self.is_markdown(file_path):
-            raise Exception(print("Error: File not markdown"))
-
-    def load_content(self, file_path, content_type):
-        input_file = codecs.open(file_path)
-        text = input_file.read()
-
-        content = ""
-        if content_type == "html":
-            content = self.markdown2html(text)
-        elif content_type == "plain":
-            content = text
-        else:
-            raise Exception(print("Error: CONTENT_TYPE '" + content_type + "' not support"))
-        return content
-
-    def get_subject_from_markdown_file_name(self, file_path):
-        return file_path.split("/")[-1][:-3]
+    def content_transfer(self, text_type, raw_text):
+        if text_type == TextType.MD.name:
+            return "html", self.markdown2html(raw_text)
+        if text_type == TextType.HTML.name:
+            return "html", raw_text.strip()
+        if text_type == TextType.TXT.name:
+            return "plain", raw_text.strip()
 
     def run(self):
-
-        self.check_file_type(self.file_path)
-
-        self.subject = self.get_subject_from_markdown_file_name(self.file_path)
-
-        self.content = self.load_content(self.file_path, self.content_type)
         
         #设置email信息
         #邮件内容设置
@@ -63,11 +76,8 @@ class AutoMail:
         message['From'] = self.mail_sender 
         #接受方信息     
         message['To'] = ",".join(self.to_receivers)
-        receivers = self.to_receivers
-
-        if self.cc_receivers is not None and len(self.cc_receivers) > 0:
-            message['Cc'] = ",".join(self.cc_receivers)
-            receivers += self.cc_receivers
+        message['Cc'] = ",".join(self.cc_receivers)
+        receivers = self.to_receivers + self.cc_receivers
 
         #登录并发送邮件
         try:
@@ -87,24 +97,11 @@ class AutoMail:
 if __name__ == "__main__":
 
 
-    if len(sys.argv) < 2:
-        raise Exception(print("Error: please give the file path"))
+    if len(sys.argv) < 3:
+        raise Exception(print("Error: please give config file path and content file path"))
 
-    file_path = sys.argv[1]
-
-    dir_name = os.path.dirname(__file__)
-    conf_file_path = dir_name + "/property.conf"
+    config_file_path = sys.argv[1]
+    content_file_path = sys.argv[2]
     
-    config = ConfigParser()
-    config.read(conf_file_path, encoding="utf-8")
-    mail_host = config["email"]["mail_host"]
-    mail_user = config["email"]["mail_user"]
-    mail_pass = config["email"]["mail_pass"]
-    mail_sender = config["email"]["sender"]
-    to_receivers = [receiver.strip() for receiver in config["email"]["to_receivers"].split(",")]
-    cc_receivers = [receiver.strip() for receiver in config["email"]["cc_receivers"].split(",")]
-    content_type = config["email"]["content_type"]
-    
-    auto_mail = AutoMail(mail_host, mail_user, mail_pass, mail_sender, to_receivers, cc_receivers, content_type, file_path)
-
+    auto_mail = AutoMail(config_file_path, content_file_path)
     auto_mail.run()

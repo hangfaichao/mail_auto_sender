@@ -1,8 +1,8 @@
 # mail_auto_sender
 
-Send email from your local markdown file automatically.
+Send email from your local file automatically. Supported file type includes txt, markdown, html.
 
-Subject of mail will be the filename of markdown and content can be displayed the same as markdown.
+Subject of mail will be your filename.
 
 ## Dependency package
 
@@ -12,8 +12,8 @@ Installation: `pip3 install markdown`
 
 ## Configuration
 
-write your own 'property.conf'
+Write your own configuration file. An example is provided like 'property.conf'
 
 ## Run
 
-`python3 mail_sender.py ${your_markdown_path}`
+`python3 mail_sender.py ${your_configuration_file_path} ${your_content_file_path}`
